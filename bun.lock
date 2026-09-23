@@ -1,0 +1,15 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "proof-tickets",
+      "dependencies": {
+        "tigerbeetle-node": "0.17.9",
+      },
+    },
+  },
+  "packages": {
+    "tigerbeetle-node": ["tigerbeetle-node@0.17.9", "", {}, "sha512-jx2V8WtY1IKndEGhNWsUYHh7Sc9uYLylkJUIXwkskUm/q/ziqS3VyKzBCSTkfU4nZxkAXHeVzzbG30ENzGj68w=="],
+  }
+}

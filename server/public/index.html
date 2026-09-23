@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proof Tickets</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%237cc4a4%22/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/datastar.js"></script>
+</head>
+<body data-signals="{name: ''}" data-init="@get('/events')">
+  <header>
+    <div>
+      <h1>Proof Tickets</h1>
+      <p class="sub">A tiny box office whose rules are <em>proven</em>, not just tested.
+        <span class="stack"><b>Bend</b> decides and proves · <b>TigerBeetle</b> keeps the money · <b>Datastar</b> draws it live</span></p>
+    </div>
+    <div id="wallet"></div>
+  </header>
+
+  <main>
+    <section class="house">
+      <div class="stage">STAGE</div>
+      <div id="seats" class="grid"></div>
+      <div class="legend">
+        <span><i class="sw free"></i>free · click to hold</span>
+        <span><i class="sw held"></i>held</span>
+        <span><i class="sw mine"></i>yours</span>
+        <span><i class="sw sold"></i>sold</span>
+      </div>
+
+      <div class="card">
+        <h2>Your holds</h2>
+        <p class="hint">A hold reserves the seat <em>and</em> the money in one linked TigerBeetle chain. Pay or release it before the timer runs out, or it is released for you.</p>
+        <div id="holds"></div>
+      </div>
+
+      <div class="card">
+        <h2>Your name</h2>
+        <p class="hint">Shown on the seats you hold. Try something nasty, like <code>&lt;img src=x onerror=alert(1)&gt;</code>. The law <code>names_cannot_inject</code> says it can't change the page's structure.</p>
+        <form class="name" data-on:submit__prevent="@post('/name')">
+          <input data-bind:name maxlength="60" placeholder="Your name" autocomplete="off">
+          <button>Save</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2>Try to break it</h2>
+        <p class="hint">Each button attacks one law. The feed on the right shows what the proven model said and what TigerBeetle said.</p>
+        <div class="attacks">
+          <button data-on:click="@post('/break/double')"><b>Double-book</b><span>two holds on one seat, at the same instant</span></button>
+          <button data-on:click="@post('/break/broke')"><b>Overspend</b><span>hold seats until the wallet runs dry</span></button>
+          <button data-on:click="@post('/break/steal')"><b>Pay for someone else</b><span>settle another visitor's hold</span></button>
+          <button data-on:click="@post('/break/retry')"><b>Replay</b><span>resend the last transfers, same ids</span></button>
+          <button class="trap" data-on:click="@post('/break/expire')"><b>Break the model</b><span>let TigerBeetle expire a hold the model can't see expire</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="truth">
+      <div class="card">
+        <h2>Proven</h2>
+        <!--LAWS-->
+      </div>
+
+      <div class="card">
+        <h2>Checked live</h2>
+        <p class="hint">A proof covers the Bend model, not the database. So every command also runs on the real TigerBeetle, and the server compares statuses and every account's balances.</p>
+        <div id="check"></div>
+      </div>
+
+      <div class="card">
+        <h2>Activity</h2>
+        <ol id="feed"></ol>
+      </div>
+
+      <div class="card limits">
+        <h2>Not proven (the limits)</h2>
+        <ul>
+          <li><b>That the model is TigerBeetle.</b> The laws are about <code>ledger.bend</code>. That it matches the real database is only checked, one command at a time. <em>Break the model</em> shows it failing.</li>
+          <li><b>Time.</b> The model has no clock. Hold expiry is a timer in the TypeScript shell, with TigerBeetle's own timeout as a backstop. A proof can say "an expired hold is never paid for", but not "a hold does expire".</li>
+          <li><b>The shell.</b> <code>server/*.ts</code> encodes ids, sets flags, maps status codes and owns the sessions. None of that is checked. The panels on this side are rendered there; they call the proven escaper, but nothing forces them to.</li>
+          <li><b>Numbers.</b> TigerBeetle counts in u128. Bend's runtime <code>Nat</code> stops at 2<sup>48</sup>, so ids are small counters and prices are in cents.</li>
+          <li><b>The laws themselves.</b> A proof shows the code meets the law as written. A wrong or missing law, like "refunds exist", is not caught.</li>
+          <li><b>The browser, the network, TigerBeetle's own code.</b> These are trusted. TigerBeetle is tested with its own deterministic simulator, not proven.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

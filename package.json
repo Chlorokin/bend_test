@@ -1,0 +1,13 @@
+{
+  "name": "proof-tickets",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prove": "bun .tools/bend/bend2/main.ts core/PROOF.bend",
+    "start": "bun server/server.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "tigerbeetle-node": "0.17.9"
+  }
+}

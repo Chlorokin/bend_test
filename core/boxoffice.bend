@@ -1,5 +1,5 @@
 # boxoffice.bend: the business. A small venue sells seats; a visitor
-# joins (and gets a $100 wallet), holds a seat for a few minutes, then pays
+# joins (and gets a $200 wallet), holds a seat for a few minutes, then pays
 # or releases it. Every command becomes one linked chain of TigerBeetle
 # transfers, so a hold moves the seat and the money together or not at all.
 #
@@ -25,7 +25,7 @@ def seat_count() -> Nat:
 
 # what a new visitor's wallet is funded with, in cents
 def stipend() -> Nat:
-  10000n
+  20000n
 
 # rows of four: front $45, middle $30, back $15
 def price(+k: Nat) -> Nat:
