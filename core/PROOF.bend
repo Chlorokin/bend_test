@@ -5,6 +5,8 @@ import Base
 import ./kit.bend as K
 import ./ledger.bend as L
 import ./boxoffice.bend as B
+import ./html.bend as H
+import ./view.bend as V
 import ./LAWS.bend as Laws
 
 # Proof kit
@@ -1073,3 +1075,98 @@ def retry.fin(+Lg: L.Ledger, +op: L.Op, m: Or({L.after(Lg, op) == Lg : L.Ledger}
 # refused as Exists before it writes)
 def Laws.retry_is_harmless(Lg, op):
   retry.fin(Lg, op, mark(Lg, op))
+
+# The page
+# ========
+
+# one escaped character, in front of a clean rest, leaves it clean: every
+# entity is made of safe characters (computed), and a plain character is
+# plain because the classifier said so (the equation e)
+def esc_clean(+c: Char, k: H.CharKind, +rest: String, ih: {H.clean(rest) == True{} : Bool})
+  -> {H.kind(c) == k : H.CharKind} -> {H.clean(H.esc(c, k, rest)) == True{} : Bool}:
+  match k:
+    case H.Lt{}:
+      e => ih
+    case H.Gt{}:
+      e => ih
+    case H.Amp{}:
+      e => ih
+    case H.Quot{}:
+      e => ih
+    case H.Apos{}:
+      e => ih
+    case H.Plain{}:
+      e =>
+        %sym(H.CharKind, H.kind(c), H.Plain{}, e) : {Bool.not(H.danger_k(_)) && H.clean(rest) == True{} : Bool}
+        ih
+
+# LAW text_is_clean
+def Laws.text_is_clean(s):
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+c, +t}:
+      esc_clean(c, H.kind(c), H.text(t), Laws.text_is_clean(t), {==})
+
+# Tags
+# ----
+
+def add_assoc(x: Nat, -y: Nat, -z: Nat) -> {Nat.add(Nat.add(x, y), z) == Nat.add(x, Nat.add(y, z)) : Nat}:
+  match x:
+    case 0n:
+      {==}
+    case 1n+p:
+      Equal.cong(Nat, Nat, n => 1n+n, Nat.add(Nat.add(p, y), z), Nat.add(p, Nat.add(y, z)), add_assoc(p, y, z))
+
+def tags_app(a: String, +b: String) -> {H.tags(a ++ b) == Nat.add(H.tags(a), H.tags(b)) : Nat}:
+  match a:
+    case SNil{}:
+      {==}
+    case SCon{+c, +t}:
+      +x = H.tags.k(H.kind(c))
+      %sym(Nat, H.tags(t ++ b), Nat.add(H.tags(t), H.tags(b)), tags_app(t, b)) : {Nat.add(x, _) == Nat.add(Nat.add(x, H.tags(t)), H.tags(b)) : Nat}
+      sym(Nat, Nat.add(Nat.add(x, H.tags(t)), H.tags(b)), Nat.add(x, Nat.add(H.tags(t), H.tags(b))), add_assoc(x, H.tags(t), H.tags(b)))
+
+def esc_tags(+c: Char, k: H.CharKind, +rest: String, ih: {H.tags(rest) == 0n : Nat})
+  -> {H.kind(c) == k : H.CharKind} -> {H.tags(H.esc(c, k, rest)) == 0n : Nat}:
+  match k:
+    case H.Lt{}:
+      e => ih
+    case H.Gt{}:
+      e => ih
+    case H.Amp{}:
+      e => ih
+    case H.Quot{}:
+      e => ih
+    case H.Apos{}:
+      e => ih
+    case H.Plain{}:
+      e =>
+        %sym(H.CharKind, H.kind(c), H.Plain{}, e) : {Nat.add(H.tags.k(_), H.tags(rest)) == 0n : Nat}
+        ih
+
+# escaped text opens no tags
+def tags_text(s: String) -> {H.tags(H.text(s)) == 0n : Nat}:
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+c, +t}:
+      esc_tags(c, H.kind(c), H.text(t), tags_text(t), {==})
+
+# pre ++ (text ++ post) opens as many tags as pre and post together
+def around(+P: String, +T: String, +Q: String, h: {H.tags(T) == 0n : Nat})
+  -> {H.tags(P ++ (T ++ Q)) == Nat.add(H.tags(P), H.tags(Q)) : Nat}:
+  %sym(Nat, H.tags(P ++ (T ++ Q)), Nat.add(H.tags(P), H.tags(T ++ Q)), tags_app(P, T ++ Q)) : {_ == Nat.add(H.tags(P), H.tags(Q)) : Nat}
+  %sym(Nat, H.tags(T ++ Q), Nat.add(H.tags(T), H.tags(Q)), tags_app(T, Q)) : {Nat.add(H.tags(P), _) == Nat.add(H.tags(P), H.tags(Q)) : Nat}
+  %sym(Nat, H.tags(T), 0n, h) : {Nat.add(H.tags(P), Nat.add(_, H.tags(Q))) == Nat.add(H.tags(P), H.tags(Q)) : Nat}
+  {==}
+
+# LAW names_cannot_inject: both cells open tags(pre) + tags(post) tags
+def Laws.names_cannot_inject(k, s, viewer, who1, who2):
+  +P = V.seat_pre(k, s, viewer)
+  +Q = V.seat_post()
+  +T1 = H.text(V.shown(s, who1))
+  +T2 = H.text(V.shown(s, who2))
+  Equal.trans(Nat, H.tags(P ++ (T1 ++ Q)), Nat.add(H.tags(P), H.tags(Q)), H.tags(P ++ (T2 ++ Q)),
+    around(P, T1, Q, tags_text(V.shown(s, who1))),
+    sym(Nat, H.tags(P ++ (T2 ++ Q)), Nat.add(H.tags(P), H.tags(Q)), around(P, T2, Q, tags_text(V.shown(s, who2)))))

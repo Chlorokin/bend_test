@@ -6,6 +6,8 @@ import Base
 import ./kit.bend as K
 import ./ledger.bend as L
 import ./boxoffice.bend as B
+import ./html.bend as H
+import ./view.bend as V
 
 # Vocabulary
 # ----------
@@ -103,3 +105,21 @@ law only_holder_releases:
   for +p2: Nat
   for e: {B.owns(Lg, u, t1, t2) == False{} : Bool}
   {B.next(Lg, B.Release{u, t1, t2, p1, p2}) == Lg : L.Ledger}
+
+# The page
+# --------
+
+# LAW: escaped visitor text never contains < > " or ', whatever it was.
+law text_is_clean:
+  for s: String
+  {H.clean(H.text(s)) == True{} : Bool}
+
+# LAW: a seat's cell has the same tag structure whatever its holder calls
+# themselves: no display name can add or remove an element.
+law names_cannot_inject:
+  for +k: Nat
+  for +s: B.Seat
+  for +viewer: Nat
+  for +who1: String
+  for +who2: String
+  {H.tags(V.seat_cell(k, s, viewer, who1)) == H.tags(V.seat_cell(k, s, viewer, who2)) : Nat}
